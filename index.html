@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<title>168-timmarsräknare</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    .result { margin-top: 20px; font-weight: bold; font-size: 1.2em; }
+    .countdown { margin-top: 10px; font-size: 1.1em; color: darkred; }
+</style>
+</head>
+<body>
+
+<h2>168-timmarsräknare</h2>
+
+<label for="nextTime">Nästa gång du kan jobba med uppgiften:</label><br>
+<input type="datetime-local" id="nextTime" onchange="calculate()"><br>
+
+<div class="result" id="output"></div>
+<div class="countdown" id="countdown"></div>
+
+<script>
+let countdownInterval;
+
+function setDefaultAndCalculate() {
+    let now = new Date();
+    let next = new Date(now);
+
+    // Flytta fram minst en dag
+    next.setDate(next.getDate() + 1);
+
+    // Hoppa över lördag & söndag
+    while (next.getDay() === 0 || next.getDay() === 6) {
+        next.setDate(next.getDate() + 1);
+    }
+
+    // Sätt tiden till 09:00
+    next.setHours(9, 0, 0, 0);
+
+    // Sätt som standardvärde i input
+    document.getElementById("nextTime").value = next.toISOString().slice(0,16);
+
+    // Räkna direkt
+    calculate();
+}
+
+function calculate() {
+    clearInterval(countdownInterval);
+
+    const input = document.getElementById("nextTime").value;
+    if (!input) {
+        document.getElementById("output").innerText = "Vänligen fyll i datum och tid.";
+        document.getElementById("countdown").innerText = "";
+        return;
+    }
+
+    const nextDate = new Date(input);
+    const prevDate = new Date(nextDate.getTime() - (7 * 24 * 60 * 60 * 1000));
+
+    document.getElementById("output").innerHTML =
+        `Datum & tid du angav: ${nextDate.toLocaleString("sv-SE")}<br>` +
+        `Exakt 7 dagar tidigare: ${prevDate.toLocaleString("sv-SE")}`;
+
+    // Starta nedräkning till 168 timmar efter prevDate
+    const deadline = new Date(prevDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+    startCountdown(deadline);
+}
+
+function startCountdown(deadline) {
+    function updateCountdown() {
+        const now = new Date();
+        let diff = deadline - now;
+
+        if (diff <= 0) {
+            document.getElementById("countdown").innerText = "❌ DEADLINE passerad!";
+            clearInterval(countdownInterval);
+            return;
+        }
+
+        let days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        let hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        document.getElementById("countdown").innerText =
+            `⏳ Tid kvar till deadline: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    updateCountdown();
+    countdownInterval = setInterval(updateCountdown, 1000);
+}
+
+// Kör direkt vid sidstart
+window.onload = setDefaultAndCalculate;
+</script>
+
+</body>
+</html>
